@@ -4,6 +4,12 @@ Servo wheel;
 int i;
 int ledPin =  13;    // LED connected to digital pin 13
 int radioPin = 3;
+unsigned long radioStartTime = 0;
+int radioPulseWidth = 0;
+
+unsigned long wheelStartTime = 0;
+int wheelPulseWidth = 0;
+
 
 void setup() 
 {
@@ -11,32 +17,46 @@ void setup()
   //wheel.attach(3, 961, 3542);
   // initialize the digital pin as an output:
   pinMode(ledPin, OUTPUT);
-  pinMode(radioPin, INPUT);
-  attachInterrupt(radioPin, radioControl, RISING);
+  pinMode(3, INPUT);
+  pinMode(2, INPUT);
+  attachInterrupt(1, radioMeasure, CHANGE);
+  attachInterrupt(0, wheelMeasure, CHANGE);
   //wheel.writeMicroseconds(2500);
 }
 
-void radioControl()
+void radioMeasure()
 {
-  digitalWrite(ledPin, HIGH);
-  for(i = 0; i < 3000; i++) {
-    if (digitalRead(radioPin) == LOW) {
-      digitalWrite(ledPin, LOW);
-      break;
-    }
-    delay(1);
+  if (radioStartTime) {
+    radioPulseWidth = micros() - radioStartTime;
+    digitalWrite(ledPin, LOW);
+    radioStartTime = 0;
+  } else {
+    digitalWrite(ledPin, HIGH);
+    radioStartTime = micros();
+    radioPulseWidth = 0;
   }
-  Serial.println(i);
 }
+
+void wheelMeasure()
+{
+  if (wheelStartTime) {
+    wheelPulseWidth = micros() - wheelStartTime;
+    wheelStartTime = 0;
+  } else {
+    wheelStartTime = micros();
+    wheelPulseWidth = 0;
+  }
+}
+
+
 
 void loop()
 {
-  digitalWrite(ledPin, HIGH);
-  Serial.print("PING");
-  Serial.println(digitalRead(radioPin));
-  delay(500);
-  digitalWrite(ledPin, LOW);
-  delay(1500);
+  //digitalWrite(ledPin, HIGH);
+  Serial.print(radioPulseWidth);
+  Serial.print(" ");
+  Serial.println(wheelPulseWidth);
+  delay(100);
 }
 
 void rotate(int from, int to, int step_) 
